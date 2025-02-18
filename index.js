@@ -20,11 +20,10 @@ app.get("/", function (req, res) {
 
 // Implements the timestamp api service. requests to /api/:date?
 // are converted to a Date object and a timestamp is returned.
-// If the given data is invalid and error is returned.
+// If the given date is invalid an error is returned.
 app.get('/api/:date?', function(req, res) {
   // Create Date object based on given date param
   var date;
-  
   if(req.params.date == undefined) {
     // Date is undefined, return current timestamp
     date = new Date();
@@ -32,17 +31,18 @@ app.get('/api/:date?', function(req, res) {
     // Date is an integer, treat as unix timestamp
     date = new Date(parseInt(req.params.date));
   } else {
-    // Date is in another format, try to parse by
-    // creating Date obj. If this fails, return error.
-    try {
-      date = new Date(req.params.date);
-    } catch (error) {
-      res.json({"error": "Invalid Date"});
-    }
+    /* Date is in another format, try to parse 
+       by creating Date obj. */
+    date = new Date(req.params.date);
   }
 
-  // Convert to unix and utc timestamps and return
-  res.json({"unix": date.getTime(), "utc": date.toUTCString()});
+  if(date.toString() === 'Invalid Date') {
+    // date conversion was unsuccessful, return error
+    res.json({"error": "Invalid Date"});
+  } else {
+    // Convert to unix and utc timestamps and return
+    res.json({"unix": date.getTime(), "utc": date.toUTCString()});
+  }
 });
 
 // Listen on port set in environment variable or default to 3000
