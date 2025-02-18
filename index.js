@@ -18,34 +18,32 @@ app.get("/", function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
 });
 
-/**
- * Takes a date object and returns an object with unix and utc timestamps
- */
-function getTimestamp(date) {
-  // Assemble and return timestamp formats
-  return {"unix": date.getTime(), "utc": date.toUTCString()};
-}
+// Implements the timestamp api service. requests to /api/:date?
+// are converted to a Date object and a timestamp is returned.
+// If the given data is invalid and error is returned.
+app.get('/api/:date?', function(req, res) {
+  // Create Date object based on given date param
+  var date;
+  
+  if(req.params.date == undefined) {
+    // Date is undefined, return current timestamp
+    date = new Date();
+  } else if(req.params.date.match('^-?\\d+$')) {
+    // Date is an integer, treat as unix timestamp
+    date = new Date(parseInt(req.params.date));
+  } else {
+    // Date is in another format, try to parse by
+    // creating Date obj. If this fails, return error.
+    try {
+      date = new Date(req.params.date);
+    } catch (error) {
+      res.json({"error": "Invalid Date"});
+    }
+  }
 
-// Return current timestamp
-app.get('/api', function(req, res) {
-  res.json(getTimestamp(new Date()));
+  // Convert to unix and utc timestamps and return
+  res.json({"unix": date.getTime(), "utc": date.toUTCString()});
 });
-
-// Return timestamp from dateString request
-app.get('/api/:dateString(\\d{4}-\\d{2}-\\d{2})', function(req, res) {
-  res.json(getTimestamp(new Date(req.params.dateString)));
-});
-
-// Return timestamp from unix timestamp request
-app.get('/api/:timestamp(-?\\d+)', function(req, res) {
-  res.json(getTimestamp(new Date(parseInt(req.params.timestamp))));
-});
-
-// Invalid api call
-app.get('/api/*', function(req, res) {
-  res.json({"error": "Invalid Date"});
-});
-
 
 // Listen on port set in environment variable or default to 3000
 var listener = app.listen(process.env.PORT || 3000, function () {
